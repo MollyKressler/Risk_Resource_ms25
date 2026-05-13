@@ -12,8 +12,6 @@
 ## Load Workspace, local macbook
 
 pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep,sp,spdep,beepr,HDInterval, patchwork, cowplot, tidybayes)
-setwd('/Users/mollykressler/Documents/Documents - Molly’s MacBook Pro/data_phd')
-
 
 ###################################
 ##########     END     ############
@@ -464,10 +462,5 @@ hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs=
   ## Save path estimates and path means + HDI dfs
 
     saveRDS(out.p3, 'resource_chp3/path_inference/path3_means_andHDI_at_hexagons_model6_jan2025.RData')
-
-
-
-
-
 
 
