@@ -1,6 +1,6 @@
-## Bayesian Structural Equartion Model & Path analysis for MS 'Bayesian Structural Equation Models reveal risk and resource trade-offs in a juvenile elasmobranch'
+## Bayesian Structural Equartion Model & Path analysis 
 
-## Code and approach here heavily inspired by modelling code from paper Bennett, S., Harris, M. P., Wanless, S., Green, J. A., Newell, M. A., Searle, K. R., & Daunt, F. (2022). Earlier and more frequent occupation of breeding sites during the non‐breeding season increases breeding success in a colonial seabird. Ecology and Evolution, 12(9). https://doi.org/10.1002/ece3.9213. Thank you to S Bennett for sharing their JAGs code with Rich B Sherley. 
+## Code and approach here inspired by modelling code from paper Bennett, S., Harris, M. P., Wanless, S., Green, J. A., Newell, M. A., Searle, K. R., & Daunt, F. (2022). Earlier and more frequent occupation of breeding sites during the non‐breeding season increases breeding success in a colonial seabird. Ecology and Evolution, 12(9). https://doi.org/10.1002/ece3.9213. Thank you to S Bennett for sharing their JAGs code with Rich B Sherley. 
 
 ## created by Molly M Kressler 
 
@@ -9,9 +9,9 @@
 ########## RUN AT OPEN ############
 ###################################
 
-## Load Workspace, local macbook
+## Load Workspace
 
-pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep,sp,spdep,beepr,HDInterval, patchwork, cowplot, tidybayes)
+pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep,sp,spdep,beepr,HDInterval, patchwork, cowplot, tidybayes) # if not installed, install 'pacman' package.
 
 ###################################
 ##########     END     ############
@@ -22,44 +22,17 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 ### Define Sharkiness
 ## counts of detections per individual per Site (buffer/receiver)
 
-pointdata<-read.csv('pointdata_juvlemons_withAllCoV_MKthesis20192020.csv')%>%
-    mutate(tide = case_when(tidephs == 'L' ~ 1, tidephs == 'H' ~ 0))%>%
-    mutate(buffIDnum = parse_number(buffID))
+pointdata<-readRDS('pointdata_juvlemons_openaccess.RDS')
 stopifnot(nrow(pointdata)==560*2) # check 
 sapply(pointdata,class)
 summary(pointdata)
   
- #add relative proportion of detections of juveniles to path inference figure.
-    #summarise across tidal phases (L/H)
-    names(pointdata)
-    point.sf <- st_as_sf(st_read('pointdata_juvlemons_withAllCoV_MKthesis20192020.shp'),crs = 'WGS84')
-    total = sum(point.sf$n_juv)
-    sum.dett <- point.sf %>% 
-      dplyr::select(buffID, n_juv, tidephs,geometry) %>%
-      group_by(buffID)%>%
-      summarise(n = sum(n_juv))%>%
-      st_as_sf()
-    sum.dett
-
 ####################################################
 ###### DF 2, for process model for fishiness  ######
 
-hexdata<-read.csv('hexdata_juvLemonsPrUse_withAllCov_MKthesis.csv')%>%
-    mutate(st_shark = (m5_PUSE - mean(m5_PUSE))/sd(m5_PUSE))%>%
-    mutate(tide = case_when(tidephs == 'L' ~ 1, tidephs == 'H' ~ 0))
+hexdata<-readRDS('hexdata_juvlemons_openaccess.RDS')
 stopifnot(nrow(hexdata)==5296) # check 
 summary(hexdata)
-
-hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs='WGS84')%>%
-  mutate(st_shark = (m5_PUSE - mean(m5_PUSE))/sd(m5_PUSE))%>%
-  mutate(tide = case_when(tidephs == 'L' ~ 1, tidephs == 'H' ~ 0))%>%
-  rename(standard.hexshark = st_shark,
-    standard.hexfish = st_maxN,
-    standard.hexdist2shore = st_d2sh,
-    standard.hexdistcmg = st_dstc,
-    standard.hexmds = st_mds,
-    standard.hexhds = st_hds,
-    standard.hexdist2jetty = st_d2jetty)
 
 
 ##################################################################
@@ -259,9 +232,8 @@ hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs=
     ccMCMC6 <-compileNimble(MCMC_model6, project = model6)
     samples6 <- runMCMC(ccMCMC6,niter=10000, nburnin=2000, nchains=3,samplesAsCodaMCMC = TRUE) 
 
-    summary(samples6)
     
-    saveRDS(samples6,'resource_chp3/nimblemodel_outputs/mcmcsamples_model6_niter5000_burn1000_chains3_jan2025.RDS')
+    saveRDS(samples6,'mcmcsamples_model6_niter5000_burn1000_chains3_jan2025.RDS')
 
     # trace and density plots
     
@@ -271,8 +243,7 @@ hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs=
     ## Summary Table & Caterpillar plots with MCMCvis & tidybayes to show small values ##
     ###########################################################
     
-    # import RDS, local macbook 
-    samplesList6a <- readRDS('resource_chp3/nimblemodel_outputs/mcmcsamples_model6_niter5000_burn1000_chains3_jan2025.RDS')
+    samplesList6a <- readRDS('mcmcsamples_model6_niter5000_burn1000_chains3_jan2025.RDS')
 
     mcmc_summary_Cmodel6_samplesListfromRDS<-MCMCsummary(samplesList6a,round=3,probs=c(0.05,0.95),pg0=TRUE)%>%
       tibble::rownames_to_column()%>%
@@ -293,12 +264,12 @@ hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs=
       autofit()
     mcmc_summary_Cmodel6_samplesListfromRDS
     
-    save_as_image(mcmc_summary_Cmodel6_samplesListfromRDS,path='resource_chp3/nimblemodel_outputs/mcmcsamples__model6_niter5000_burn1000_chains3_jan2025.png',res=850)  
-    save_as_docx(mcmc_summary_Cmodel6_samplesListfromRDS,path='resource_chp3/nimblemodel_outputs/mcmcsamples__model6_niter5000_burn1000_chains3_jan2025.docx')  
+    save_as_image(mcmc_summary_Cmodel6_samplesListfromRDS,path='mcmcsamples__model6_niter5000_burn1000_chains3_jan2025.png',res=850)  
+    save_as_docx(mcmc_summary_Cmodel6_samplesListfromRDS,path='mcmcsamples__model6_niter5000_burn1000_chains3_jan2025.docx')  
     ## for chp3 ms v6 
 
-      save_as_image(mcmc_summary_Cmodel6_samplesListfromRDS,path='chp3_ms_v6_figures_tables/mcmcsamples__model6_niter5000_burn1000_chains3_jan2025.png',res=850)  
-    save_as_docx(mcmc_summary_Cmodel6_samplesListfromRDS,path='chp3_ms_v6_figures_tables/mcmcsamples__model6_niter5000_burn1000_chains3_jan2025.docx')  
+      save_as_image(mcmc_summary_Cmodel6_samplesListfromRDS,path='mcmcsamples__model6_niter5000_burn1000_chains3_jan2025.png',res=850)  
+    save_as_docx(mcmc_summary_Cmodel6_samplesListfromRDS,path='mcmcsamples__model6_niter5000_burn1000_chains3_jan2025.docx')  
 
      # grab draws with gather_draws and create label for paths based on iterations and sequence of paths minN to maxN. 
     
@@ -326,44 +297,8 @@ hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs=
 ##################################################
 
     ## For local macbook
-    samplesList4 <- readRDS('resource_chp3/nimblemodel_outputs/mcmcsamples_model4_niter20000_burn12000_chains3_4may2024.RDS')
-    
-    samplesList5a <- readRDS('resource_chp3/nimblemodel_outputs/mcmcsamples_model5a_niter5000_burn1000_chains3_July2024.RDS')
 
     samplesList6a <- readRDS('resource_chp3/nimblemodel_outputs/mcmcsamples_model6_niter5000_burn1000_chains3_jan2025.RDS')
-
-    pointdata<-read.csv('pointdata_juvlemons_withAllCoV_MKthesis20192020.csv')%>%
-    mutate(tide = case_when(tidephs == 'L' ~ 1, tidephs == 'H' ~ 0))%>%
-    mutate(buffIDnum = parse_number(buffID))
-
-    hexdata <- read.csv('hexdata_juvLemonsPrUse_withAllCov_MKthesis.csv')%>%
-      mutate(st_shark = (m5_PUSE - mean(m5_PUSE))/sd(m5_PUSE))%>%
-      mutate(tide = case_when(tidephs == 'L' ~ 1, tidephs == 'H' ~ 0))%>%
-      rename(
-        standard.hexdist2shore = st_d2sh, 
-        standard.hexdepth = st_depth,
-        standard.hexdistcmg = st_dstc,
-        hextide = tide,
-        zlogit.sqzrisk = st_risk
-        )
-    hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs='WGS84')%>%
-      mutate(st_shark = (m5_PUSE - mean(m5_PUSE))/sd(m5_PUSE))%>%
-      mutate(tide = case_when(tidephs == 'L' ~ 1, tidephs == 'H' ~ 0))%>%
-      rename(
-        standard.hexdist2shore = st_d2sh, 
-        standard.hexdepth = st_depth,
-        standard.hexdistcmg = st_dstc,
-        hextide = tide,
-        zlogit.sqzrisk = st_risk
-        )
-      nrow(hexsf) # should be 5296
-    
-  ## Make test sample data frames - based on the hexagon df
-
-    hexsamp <- hexdata %>%
-      sample_n(5)%>%
-      as.data.frame() 
-
 
   ## From model4 samplesList, make objects with all draws of each coeefficient from path 2 and path 3, e.g. j4. 
     # path 3: e1, e2, e3, e4, e5, a7
@@ -396,42 +331,13 @@ hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs=
       }
 
       ## save calculations
-        saveRDS(preds.path3,'resource_chp3/path_inference/path3_estimates_at_hexagons_model6aJuly2024_calcJan2025.RData')
+        saveRDS(preds.path3,'path3_estimates_at_hexagons_model6aJuly2024_calcJan2025.RData')
 
   ## Calculate marginal means, and HDI (highest density intervals)
-
-    ## deprecated and inaccurate way to calculate HDIs - HDInterval::hdi needs values in columns. 
-
-      mean(as.numeric(preds.path3[1,]))
-
-      cols <- c('jcode','mean', 'lower', 'upper')
-      p2pred <- as.data.frame(matrix(ncol=4, nrow = n.hex))
-      p3pred <- as.data.frame(matrix(ncol=4, nrow = n.hex))
-      colnames(p2pred) = cols
-      colnames(p3pred) = cols
-      p2pred$jcode <- as.character(hexdata$jcode)
-      p3pred$jcode <- as.character(hexdata$jcode)
-      head(p2pred)
-
-      pb <- txtProgressBar(min = 1, max = n.hex, style = 3)
-      
-      for(i in 1:n.hex){
-        p2pred[i,2] <- mean(as.numeric(preds.path2[i,]))
-        p2pred[i,3] <- hdi(preds.path2[i,])[2]
-        p2pred[i,4] <- hdi(preds.path2[i,])[1]
-        setTxtProgressBar(pb, i)
-        p3pred[i,2] <- mean(as.numeric(preds.path3[i,]))
-        p3pred[i,3] <- hdi(preds.path3[i,])[2]
-        p3pred[i,4] <- hdi(preds.path3[i,])[1]
-      };beep(3)
-
-      head(p3pred)
-
-    ## Updated approach: 5 March 2024
     
-    p3 <- readRDS('resource_chp3/path_inference/path3_estimates_at_hexagons_model6aJuly2024_calcJan2025.RData')
+    p3 <- readRDS('path3_estimates_at_hexagons_model6aJuly2024_calcJan2025.RData')
     
-    hexdata <- read.csv('hexdata_juvLemonsPrUse_withAllCov_MKthesis.csv')%>%mutate(jcode=as.character(jcode))
+    hexdata <- read.csv('hexdata_juvlemons_openaccess.RDS')%>%mutate(jcode=as.character(jcode))
       head(hexdata)
 
     ## re-format data - but tides! predictiosn follow the hexdata index order - which puts all LOW tide for each hexagon, then all high tide. So it will be 2648 rows of LOW + jcode, then 2648 rows of HIGH + jcode
@@ -461,6 +367,11 @@ hexsf <- st_as_sf(st_read('hexdata_juvLemonsPrUse_withAllCov_MKthesis.shp'),crs=
 
   ## Save path estimates and path means + HDI dfs
 
-    saveRDS(out.p3, 'resource_chp3/path_inference/path3_means_andHDI_at_hexagons_model6_jan2025.RData')
+    saveRDS(out.p3, 'path3_means_andHDI_at_hexagons_model6_jan2025.RData')
+
+
+
+
+
 
 
