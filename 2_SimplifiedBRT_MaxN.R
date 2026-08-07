@@ -2,13 +2,13 @@
 
 ## created by Molly M Kressler 
 
+### READ ME FIRST: spatial data is not provided, therefore code which looks to spatially plot data will not work but is still provided for comparison of methods and general knowledge sharing. If you would like to request the spatial components of the datasets please email the corresponding author Molly M Kressler and Matthew Smukall. 
 
 ###################################
 ########## RUN AT OPEN ############
 ###################################
 
 ## Load Workspace, local macbook
-setwd('/Users/mollykressler/Documents/Documents - Molly’s MacBook Pro/data_phd/')
 
 pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep, patchwork, cowplot, tidybayes, stats)
 
@@ -32,16 +32,7 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 
 
 	# Model RDS - BRTS, with all 9 predictor variables, 'full'
-		n1 <- readRDS('resource_chp3/model_RDS/maxN_gbm_poisson_oct2024.RDS')
-
-		# deprecated june 2024 & july 2024
-			sppfull<-readRDS('resource_chp3/model_RDS/SW_Species_brt_tc3_lr001_gaussian_aug23.RDS')
-			famfull<-readRDS('resource_chp3/model_RDS/SW_Families_brt_tc9_lr001_gaussian_aug23.RDS')
-			gerrfull<-readRDS('resource_chp3/model_RDS/gerrPoisson_brt_tc3_lr0001_poisson_aug23.RDS')		
-			richfull <- readRDS('resource_chp3/model_RDS/Species_Rchness_Poisson_brt_tc5_lr0001_poisson_NoSeason_jun24.RDS')
-			richfull_tc3 <- readRDS('resource_chp3/model_RDS/Species_Rchness_Poisson_brt_tc3_lr0001_poisson_NoSeason_jun24.RDS')
-			gerrfull <- readRDS('resource_chp3/model_RDS/gerrPoisson_brt_tc3_lr0001_poisson_NoSeason_jun24.RDS')
-
+		n1 <- readRDS('maxN_gbm_poisson_oct2024.RDS')
 
 
 ######
@@ -62,12 +53,12 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 	simple1.model$cv.statistics  # dist2shore and hds # best model without tide and low density seagrass. We want to keep tide
 	simple2.model$cv.statistics  # dist2shore and hds
 
-	saveRDS(simple1.model,'resource_chp3/model_RDS/simplified_maxN_gbm_poisson_MDS_HDS_dist2shore_oct2024.RDS')
+	saveRDS(simple1.model,'simplified_maxN_gbm_poisson_MDS_HDS_dist2shore_oct2024.RDS')
 
 	# Add tide back in because knowledge suggests it is important
 
 	simple.withtide <- gbm.step(n,gbm.x=c('tide','prp_mds','prp_hds','dist2shore'),gbm.y='maxN',tree.complexity=3,learning.rate=0.001,bag.fraction=0.75,family='poisson',plot.main = TRUE) 
-	saveRDS(simple.withtide,'resource_chp3/model_RDS/simple_maxN_gbm_poisson_TIDE_MDS_HDS_dist2shore_oct2024.RDS')
+	saveRDS(simple.withtide,'simple_maxN_gbm_poisson_TIDE_MDS_HDS_dist2shore_oct2024.RDS')
 
 	# Get n.trees and mean deviance of original & simplified models 
 		mod <- list(n1, simple1.model, simple.withtide)
@@ -90,16 +81,16 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 				theme_zebra()%>%
 				autofit()
 
-		save_as_image(info2,'resource_chp3/BRTS_outputs/BRT_maxN_oct2024/ntrees_and_deviance_of_full_and_simpleBRTS_chp3_oct2024.png',webshot='webshot')
-		save_as_docx(info2, path='resource_chp3/BRTS_outputs/BRT_maxN_oct2024/ntrees_and_deviance_of_full_and_simpleBRTS_chp3_oct2024.docx')
+		save_as_image(info2,'ntrees_and_deviance_of_full_and_simpleBRTS_chp3_oct2024.png',webshot='webshot')
+		save_as_docx(info2, path='ntrees_and_deviance_of_full_and_simpleBRTS_chp3_oct2024.docx')
 
 
 
 ######
 ## - Evaluate simplified model 
 ######
-		simplified <- readRDS('resource_chp3/model_RDS/simplified_maxN_gbm_poisson_MDS_HDS_dist2shore_oct2024.RDS')
-		simple.model <- readRDS('resource_chp3/model_RDS/simple_maxN_gbm_poisson_TIDE_MDS_HDS_dist2shore_oct2024.RDS') # including tide based on knowledge 
+		simplified <- readRDS('simplified_maxN_gbm_poisson_MDS_HDS_dist2shore_oct2024.RDS')
+		simple.model <- readRDS('simple_maxN_gbm_poisson_TIDE_MDS_HDS_dist2shore_oct2024.RDS') # including tide based on knowledge 
 		hab.labels<-(c('dist2shore'='Dist. to Shore (m)', 'prp_lds'='Prop. of \n\ Low Density \n\ Seagrass','prp_mds'='Prop. of  \n\ Medium Density \n\ Seagrass','prp_hds'='Prop. of  \n\ High Density \n\ Seagrass', 'tide' = 'Tide State'))
 
 		infl.simple<-simple.model$contributions
@@ -114,7 +105,7 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 				ylab('Relative Influence')+
 				xlab(NULL)	+
 				theme(text = element_text(size = 14))
-		ggsave(simple.relinf,file='resource_chp3/BRTS_outputs/BRT_maxN_oct2024/relative_influence_vars_maxN_BRT_SIMPLE_withTide_oct2024.png',device='png',units='in',height=4,width=5.5,dpi=900)
+		ggsave(simple.relinf,file='relative_influence_vars_maxN_BRT_SIMPLE_withTide_oct2024.png',device='png',units='in',height=4,width=5.5,dpi=900)
 		
 		res_simple <- as_tibble(resid(simple.model))%>%rename(resids = value)
 		F1 <- as_tibble(predict(simple.model))%>%rename(fitted = value)
@@ -136,12 +127,12 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 
 		diagnostics_simple <- resVfit_simple+res_simple_hist+res_simple_qq
 		
-		ggsave(diagnostics_simple, file = 'resource_chp3/BRTS_outputs/BRT_maxN_oct2024/diagnostics_BRT_SIMPLE_withTide_maxN_oct2024.png', device = 'png', unit = 'in', height = 4, width = 8, dpi = 850)	
+		ggsave(diagnostics_simple, file = 'diagnostics_BRT_SIMPLE_withTide_maxN_oct2024.png', device = 'png', unit = 'in', height = 4, width = 8, dpi = 850)	
 
 ######
 ## - Predict into 2020 habitat data - hexagon grid
 ######
-	simple.model <- readRDS('resource_chp3/model_RDS/simple_maxN_gbm_poisson_TIDE_MDS_HDS_dist2shore_oct2024.RDS') # including tide based on knowledge 
+	simple.model <- readRDS('simple_maxN_gbm_poisson_TIDE_MDS_HDS_dist2shore_oct2024.RDS') # including tide based on knowledge 
 
 	sf4preds_L <- sf4preds %>% mutate(tide = 'L')
 	sf4preds_H <- sf4preds %>% mutate(tide = 'H')
@@ -172,7 +163,7 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 		theme(strip.background = element_blank(), strip.placement = "outside")+
 		scale_y_continuous(limits = c(25.66, 25.78), breaks = c(25.68,25.72,25.76))+
 		scale_x_continuous(limits = c(-79.31,-79.24), breaks = c(-79.3,-79.27, -79.24))
-	ggsave(maxN.plotLOG,file='resource_chp3/BRTS_outputs/simplified_BRT_LOG_maxN_preds_oct24.png',device='png',units='in',height=4.5,width=6,dpi=850)		
+	ggsave(maxN.plotLOG,file='simplified_BRT_LOG_maxN_preds_oct24.png',device='png',units='in',height=4.5,width=6,dpi=850)		
 
 	maxN.plot<-ggplot()+geom_sf(data=preds,aes(fill=maxN_preds),col=NA)+
 		scale_fill_distiller(palette='YlOrRd',direction=1,limits=c(0,100),guide=guide_colourbar(title=' MaxN of 4\n\ Families'))+
@@ -182,7 +173,7 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 		theme(strip.background = element_blank(), strip.placement = "outside")+
 		scale_y_continuous(limits = c(25.66, 25.78), breaks = c(25.68,25.72,25.76))+
 		scale_x_continuous(limits = c(-79.31,-79.24), breaks = c(-79.3,-79.27, -79.24))
-	ggsave(maxN.plot,file='resource_chp3/BRTS_outputs/simplified_BRT_maxN_preds_oct24.png',device='png',units='in',height=4.5,width=6,dpi=850)
+	ggsave(maxN.plot,file='simplified_BRT_maxN_preds_oct24.png',device='png',units='in',height=4.5,width=6,dpi=850)
 
 ######
 ## - Predict into 2020 habitat data - buffers
@@ -196,7 +187,7 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 		mutate(tide = as_factor(tide))%>%
 		rename(prp_mds = prop_mdsg)
 
-	simple.model <- readRDS('resource_chp3/model_RDS/simple_maxN_gbm_poisson_TIDE_MDS_HDS_dist2shore_oct2024.RDS')
+	simple.model <- readRDS('simple_maxN_gbm_poisson_TIDE_MDS_HDS_dist2shore_oct2024.RDS')
 
 	maxN.preds<-predict.gbm(simple.model,buffs.sf,n.trees=simple.model$gbm.call$best.trees,type='response')
 	maxN.preds<-as.data.frame(maxN.preds)
@@ -234,7 +225,7 @@ pacman::p_load(MCMCvis,tidyverse,sf,nimble,devtools,flextable,arm,webshot2,sfdep
 		ggtitle('Simplified Predictions versus Observed')+
 		facet_wrap(~tide)+
 		theme(strip.background = element_blank(), strip.placement = "outside")
-	ggsave(boxplot,file='resource_chp3/BRTS_outputs/BRT_maxN_oct2024/predsVSraw_maxN_simplifiedBRT_oct24.png',device='png',units='in',height=4,width=4.5,dpi=850)
+	ggsave(boxplot,file='predsVSraw_maxN_simplifiedBRT_oct24.png',device='png',units='in',height=4,width=4.5,dpi=850)
 
 
 
