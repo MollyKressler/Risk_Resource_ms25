@@ -7,7 +7,8 @@ M M Kressler led development of R scripts and in-depth analyses with support fro
 ## Manuscript information
 _Ecological Applications_
 
-**Title:** Bayesian structural equation model reveals risk and resource trade-offs in a juvenile marine vertebrate
+**Title:** Bayesian structural equation model reveals risk and resource trade-offs in a juvenile marine vertebrate.
+
 Molly M Kressler1,2,3*, Matthew Smukall3, Evan E Byrnes4,5, Henriette Grimmel6, Robert Bullock6,7 Sarah R Driscoll8, Emily Cormier9, Clemency E White10, Vital Heim11, Tristan Guttridge12, Adrian C Gleiss4,13, David Hodgson1 & Richard B Sherley1,14 
 
 1 Centre for Ecology and Conservation/Environment and Sustainability Institute, Faculty of Environment, Science and Economy, University of Exeter, Penryn Campus, Penryn, Cornwall, UK
